@@ -14,6 +14,7 @@ import syft as sy
 
 import torch
 import torch.nn.functional as F
+from torch.nn.utils import clip_grad_norm_
 import torch.optim as optim
 
 from utils.dataloader import data_loader
@@ -101,6 +102,7 @@ class syft_model:
                 alice_loss = F.cross_entropy(alice_pred, target)
                 alice_loss.backward()
                 self.alice_optimizer.step()
+                break
 
             else:
                 self.bobs_model.train()
@@ -116,6 +118,8 @@ class syft_model:
             spd_params = list()
             # iterate all workers
             for index in range(2):
+                clip_grad_norm_(self.bobs_model.parameters(), max_norm=20)
+                clip_grad_norm_(self.alice_model.parameters(), max_norm=20)
                 # aggregation same parameters from every workers. Then encrypt it into individual worker depends on trusted worker for all.
                 spd_params.append(self.params[index][param_i].copy().fix_precision().share(self.bob, self.alice,
                                                                                            crypto_provider=self.secure_worker))
