@@ -38,7 +38,18 @@ parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='M', help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=1e-4,
                     type=float, metavar='W', help='weight decay (default: 1e-4)')
+parser.add_argument('--print-freq', '-p', default=10, type=int,
+                    metavar='N', help='print frequency (default: 10)')
 args = parser.parse_args()
+
+
+def update(data, target, model, optimizer):
+    model.train()
+    optimizer.zero_grad()
+    alice_pred = model(data)
+    alice_loss = F.cross_entropy(alice_pred, target)
+    alice_loss.backward()
+    optimizer.step()
 
 
 class syft_model:
@@ -63,12 +74,7 @@ class syft_model:
 
     def __call__(self):
         for i in range(self.arg.epochs):
-            self.train()
-            bob_loss, prc = self.test(self.bobs_model)
-            print('Epoch: [{}/{}]\t'
-                  'Loss_bob: ({:.3})\t'
-                  'Prec_bob {top1.val:.1f}% ({top1.avg:.1f}%))'.format(
-                i, self.arg.epochs, bob_loss, top1=prc))
+            self.train(epoch=i)
 
     def reload_model(self):
         """
@@ -91,25 +97,24 @@ class syft_model:
             target = target.send(self.compute_nodes[batch_idx % len(self.compute_nodes)])
             self.train_distributed_dataset.append((data, target))
 
-    def train(self):
+    def train(self, epoch):
         for batch_idx, (data, target) in enumerate(self.train_loader):
-            print(batch_idx)
-            split = batch_idx % 2
-            if split:
-                self.alice_model.train()
-                self.alice_optimizer.zero_grad()
-                alice_pred = self.alice_model(data)
-                alice_loss = F.cross_entropy(alice_pred, target)
-                alice_loss.backward()
-                self.alice_optimizer.step()
+
+            if batch_idx % self.arg.print_freq == 0:
+                bob_loss, bob_prc = self.test(self.bobs_model)
+                alice_loss, alice_prc = self.test(self.alice_model)
+                print('Epoch: [{}/{}]\t'
+                      'Loss_bob: ({:.3})\t'
+                      'Loss_alice: ({:.3})\t'
+                      'Prec_bob {top1.val:.1f}% ({top1.avg:.1f}%))'
+                      'Prec_alice {top2.val:.1f}% ({top2.avg:.1f}%))'.format(
+                    epoch, self.arg.epochs, bob_loss, alice_loss, top1=bob_prc, top2=alice_prc))
+
+            if batch_idx % 2:
+                update(data, target, self.alice_model, self.alice_optimizer)
 
             else:
-                self.bobs_model.train()
-                self.bobs_optimizer.zero_grad()
-                bobs_pred = self.bobs_model(data)
-                bobs_loss = F.cross_entropy(bobs_pred, target)
-                bobs_loss.backward()
-                self.bobs_optimizer.step()
+                update(data, target, self.bobs_model, self.bobs_optimizer)
 
         # encrypted aggregation
         new_params = list()
