@@ -102,7 +102,6 @@ class syft_model:
                 alice_loss = F.cross_entropy(alice_pred, target)
                 alice_loss.backward()
                 self.alice_optimizer.step()
-                break
 
             else:
                 self.bobs_model.train()
