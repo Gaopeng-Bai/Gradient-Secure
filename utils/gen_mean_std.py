@@ -26,7 +26,7 @@ def gen_mean_std(dataset):
 
 if __name__ == '__main__':
     # cifar10 = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
-    cifar100 = torchvision.datasets.CIFAR100(root='../data', train=True, download=True,
+    cifar100 = torchvision.datasets.MNIST(root='../data', train=True, download=True,
                                             transform=transforms.Compose([transforms.ToTensor()]))
     mean, std = gen_mean_std(cifar100)
     print(mean, std)

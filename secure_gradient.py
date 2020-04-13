@@ -4,7 +4,7 @@
 # Reference:**********************************************
 # @Time    : 4/7/2020 7:23 PM
 # @Author  : Gaopeng.Bai
-# @File    : syft_main.py
+# @File    : secure_gradient.py
 # @User    : gaopeng bai
 # @Software: PyCharm
 # @Description: 
@@ -21,9 +21,11 @@ from utils.dataloader import data_loader
 from utils.model import model_select
 from utils.Average import AverageMeter
 
-parser = argparse.ArgumentParser(description='PyTorch Cifar100 Training')
-parser.add_argument('--model', default="resnet20", type=str,
-                    metavar='N', help='choose a model to use (eg..resnet20, resnet32, resnet44, resnet110'
+parser = argparse.ArgumentParser(description='PyTorch secure gradient Training')
+parser.add_argument('--dataset', default="mnist", type=str,
+                    metavar='N', help='mnist or cifar100')
+parser.add_argument('--model', default="alexnet", type=str,
+                    metavar='N', help='choose a model to use mnist(lenet5, alexnet) or for cifar100 datasets(resnet20, resnet32, resnet44, resnet110'
                                       'preact_resnet110, resnet164, resnet1001, preact_resnet164, preact_resnet1001'
                                       'wide_resnet, resneXt, densenet)')
 parser.add_argument('--epochs', default=200, type=int,
@@ -62,10 +64,8 @@ class syft_model:
         self.alice = sy.VirtualWorker(hook, id="alice")
         self.secure_worker = sy.VirtualWorker(hook, id="secure_worker")
 
-        # self.compute_nodes = [self.bob, self.alice]
         # load data
         self.train_loader, self.test_loader = data_loader(self.arg)
-        # self.data_to_workers()
         # pre model prepare
         self.model = model_select(self.arg.model)
         self.bobs_model = self.model
@@ -86,6 +86,7 @@ class syft_model:
                                         momentum=self.arg.momentum, weight_decay=self.arg.weight_decay)
         self.alice_optimizer = optim.SGD(self.alice_model.parameters(), self.arg.lr,
                                          momentum=self.arg.momentum, weight_decay=self.arg.weight_decay)
+
         self.params = [list(self.bobs_model.parameters()), list(self.alice_model.parameters())]
 
     def data_to_workers(self):
@@ -106,7 +107,7 @@ class syft_model:
                 print('Epoch: [{}/{}]\t'
                       'Loss_bob: ({:.3})\t'
                       'Loss_alice: ({:.3})\t'
-                      'Prec_bob {top1.val:.1f}% ({top1.avg:.1f}%))'
+                      'Prec_bob {top1.val:.1f}% ({top1.avg:.1f}%))\t'
                       'Prec_alice {top2.val:.1f}% ({top2.avg:.1f}%))'.format(
                     epoch, self.arg.epochs, bob_loss, alice_loss, top1=bob_prc, top2=alice_prc))
 

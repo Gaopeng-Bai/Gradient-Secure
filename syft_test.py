@@ -4,7 +4,7 @@
 # Reference:**********************************************
 # @Time    : 4/9/2020 4:50 PM
 # @Author  : Gaopeng.Bai
-# @File    : encrypt_sub_machine.py
+# @File    : syft_test.py
 # @User    : gaope
 # @Software: PyCharm
 # @Description: 
@@ -23,15 +23,15 @@ from utils.dataloader import data_loader
 from utils.test import data_test
 from utils.model import model_select
 
-parser = argparse.ArgumentParser(description='PyTorch Cifar100 Training')
-parser.add_argument('--model', default="resnet20", type=str,
-                    metavar='N', help='choose a model to use (eg..resnet20, resnet32, resnet44, resnet110'
+parser = argparse.ArgumentParser(description='PyTorch syft test depends on syft tutorial-10 Training')
+parser.add_argument('--dataset', default="mnist", type=str,
+                    metavar='N', help='mnist or cifar100')
+parser.add_argument('--model', default="lenet5", type=str,
+                    metavar='N', help='choose a model to use mnist(lenet5, ) or for cifar100 datasets(resnet20, resnet32, resnet44, resnet110'
                                       'preact_resnet110, resnet164, resnet1001, preact_resnet164, preact_resnet1001'
                                       'wide_resnet, resneXt, densenet)')
 parser.add_argument('--epochs', default=200, type=int,
                     metavar='N', help='number of total epochs to run')
-parser.add_argument('--worker_iter', default=0, type=int,
-                    metavar='N', help='worker iterations(times of training in specify worker)')
 parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N',
                     help='mini-batch size (default: 128),only used for train')
 parser.add_argument('--lr', '--learning-rate', default=0.1,
@@ -47,7 +47,7 @@ def train_process(data, target, model, optimizer):
     model.send(data.location)
     optimizer.zero_grad()
     pred = model(data)
-    loss = F.mse_loss(pred.view(-1), target)
+    loss = F.cross_entropy(pred, target)
     loss.backward()
     optimizer.step()
     return model
@@ -68,16 +68,12 @@ class syft_model:
         self.train_loader, self.test_loader = data_test(self.arg)
         self.data_to_workers()
         # pre model prepare
-        self.model = Net()
-        # self.model = model_select(self.arg.model)
+        self.model = model_select(self.arg.model)
         self.reload_model()
 
     def __call__(self):
         for i in range(self.arg.epochs):
             self.train()
-            bob_loss = self.test(self.bobs_model)
-            alice_loss = self.test(self.alice_model)
-            print(f"Epoch {epoch + 1}")
 
     def reload_model(self):
         """

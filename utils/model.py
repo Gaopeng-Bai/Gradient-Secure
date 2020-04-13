@@ -10,6 +10,9 @@
 # @Description: 
 # Reference:**********************************************
 from models import *
+from models.lenet import lenet
+
+from torchvision.models.alexnet import AlexNet
 
 
 def model_select(arg):
@@ -45,6 +48,10 @@ def model_select(arg):
         model = resneXt_cifar(depth=29, cardinality=16, baseWidth=64, num_classes=100)
     elif arg == "densenet":
         model = densenet_BC_cifar(depth=190, k=40, num_classes=100)
+    elif arg == "lenet5":
+        model = lenet()
+    elif arg == "alexnet":
+        model = AlexNet(num_classes=10)
 
     return model
 
