@@ -47,9 +47,17 @@ Then, you need specify some parameter for training process, like epoche....
 
 3. Train
 
-```
-python syft_main.py
-```
+* Two local worker with gradient aggregation
+
+    ```
+    python syft_main.py
+    ```
+
+* Normal Model
+
+    ```
+    python Normal_main.py
+    ```
 
 
 4. Extension (For fun)
