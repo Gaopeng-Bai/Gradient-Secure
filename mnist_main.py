@@ -10,23 +10,28 @@
 # @Description: 
 # Reference:**********************************************
 import numpy as np
+import argparse
+
+
 import torch
 from torchvision.datasets import mnist
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
+import torchvision.transforms as transforms
+
 
 from utils.model import model_select
 
 parser = argparse.ArgumentParser(description='PyTorch mnist Training')
-parser.add_argument('--model', default="lenet5", type=str,
-                    metavar='N', help='lenet5, ')
-parser.add_argument('--epochs', default=200, type=int,
+parser.add_argument('--model', default="simply_cnn", type=str,
+                    metavar='N', help=' (lenet5, simply_cnn, -alexnet-) ')
+parser.add_argument('--epochs', default=15, type=int,
                     metavar='N', help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N',
                     help='mini-batch size (default: 128),only used for train')
-parser.add_argument('--lr', '--learning-rate', default=0.1,
+parser.add_argument('--lr', '--learning-rate', default=1e-2,
                     type=float, metavar='LR', help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='M', help='momentum')
@@ -50,16 +55,18 @@ def main(args):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
     model = model_select(args.model)
-    sgd = SGD(model.parameters(), arg.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+    sgd = SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     cross_error = CrossEntropyLoss()
 
-    for _epoch in range(args.epoch):
+    for _epoch in range(args.epochs):
+        print("Epoch {}/{}".format(_epoch, args.epochs))
+        print("-" * 10)
         for idx, (train_x, train_label) in enumerate(train_loader):
             label_np = np.zeros((train_label.shape[0], 10))
             sgd.zero_grad()
             predict_y = model(train_x.float())
             _error = cross_error(predict_y, train_label.long())
-            if idx % 10 == 0:
+            if idx % 100 == 0:
                 print('idx: {}, _error: {}'.format(idx, _error))
             _error.backward()
             sgd.step()
@@ -75,7 +82,7 @@ def main(args):
             correct += np.sum(_.numpy(), axis=-1)
             _sum += _.shape[0]
 
-        print('accuracy: {:.2f}'.format(correct / _sum))
+        print('test accuracy: {:.2f}'.format(correct / _sum))
 
 
 if __name__ == '__main__':

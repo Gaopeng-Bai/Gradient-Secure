@@ -11,8 +11,9 @@
 # Reference:**********************************************
 from models import *
 from models.lenet import lenet
+from models.simply_cnn import simply_cnn
 
-from torchvision.models.alexnet import AlexNet
+from models.alexnet import AlextNet
 
 
 def model_select(arg):
@@ -51,7 +52,9 @@ def model_select(arg):
     elif arg == "lenet5":
         model = lenet()
     elif arg == "alexnet":
-        model = AlexNet(num_classes=10)
+        model = AlextNet(in_channel=1, n_class=10)
+    elif arg == "simply_cnn":
+        model = simply_cnn()
 
     return model
 
