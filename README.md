@@ -44,7 +44,7 @@ git clone https://github.com/Gaopeng-Bai/pytorch-syft-cifar-model.git
 
 In this project, the network structure is defined in the "models" folder, the script ```secure_gradient.py``` is running on two separates models, gradient aggregation though Syft virtual machine. Then upload new parameters after aggregation to each model.
 
-* In ```secure_gradient.py```, **Mnist** dataset can train on ``lenet5``, ``simply_cnn``.  ``AlexNet`` model testing with Tiny ImageNet or MNIST could not be done due to their smaller feature sizes (images do not fit the input size 227 x 227). Mnist on ``lenet5`` model tested on learning rate 0.01 and epoch 15 reached 99% accuracy, and on simply_cnn spent more time than ``lenet5``.
+* In ```secure_gradient.py```, **Mnist** dataset can train on ``lenet5``, ``simply_cnn``.  but ``AlexNet`` model testing with Tiny ImageNet or MNIST could not be done due to their smaller feature sizes (images do not fit the input size 227 x 227). Mnist on ``lenet5`` model tested on learning rate 0.01 and epoch 15 reached 99% accuracy, and on simply_cnn spent more time than ``lenet5``.
 
 * **cifar100** dataset can train on ``resnet20``, ``resnet32``, ``resnet44``, ``resnet110``, ``preact_resnet110``, ``resnet164``, ``resnet1001``, ``preact_resnet164``, ``preact_resnet1001``,``wide_resnet``, ``resneXt``, ``densenet``.
 
