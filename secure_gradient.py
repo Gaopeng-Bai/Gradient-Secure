@@ -10,6 +10,7 @@
 # @Description:
 # Reference:**********************************************
 import argparse
+import numpy as np
 import syft as sy
 
 import torch
@@ -20,6 +21,7 @@ import torch.optim as optim
 from utils.dataloader import data_loader
 from utils.model import model_select
 from utils.Average import AverageMeter
+from utils.vhe import *
 
 parser = argparse.ArgumentParser(
     description='PyTorch secure gradient Training')
@@ -27,7 +29,7 @@ parser.add_argument('--dataset', default="mnist", type=str,
                     metavar='N', help='mnist or cifar100')
 parser.add_argument(
     '--model',
-    default="simply_cnn",
+    default="lenet5",
     type=str,
     metavar='N',
     help='choose a model to use mnist(lenet5, simply_cnn, alexnet) or for cifar100 datasets(resnet20, resnet32, resnet44, resnet110'
@@ -95,7 +97,6 @@ class syft_model:
         """
         set all model
         Returns:
-
         """
         self.bobs_optimizer = optim.SGD(
             self.bobs_model.parameters(),
@@ -113,17 +114,6 @@ class syft_model:
                 self.bobs_model.parameters()), list(
                 self.alice_model.parameters())]
 
-    def data_to_workers(self):
-        # split training data into two workers bob and alice
-        self.train_distributed_dataset = []
-
-        for batch_idx, (data, target) in enumerate(self.train_loader):
-            data = data.send(
-                self.compute_nodes[batch_idx % len(self.compute_nodes)])
-            target = target.send(
-                self.compute_nodes[batch_idx % len(self.compute_nodes)])
-            self.train_distributed_dataset.append((data, target))
-
     def train(self, epoch):
         for batch_idx, (data, target) in enumerate(self.train_loader):
 
@@ -134,8 +124,8 @@ class syft_model:
                     'Epoch: [{}/{}]\t'
                     'Loss_bob: ({:.3})\t'
                     'Loss_alice: ({:.3})\t'
-                    'Prec_bob {top1.val:.1f}% ({top1.avg:.1f}%))\t'
-                    'Prec_alice {top2.val:.1f}% ({top2.avg:.1f}%))'.format(
+                    'Prec_bob {top1.avg:.1f}%\t'
+                    'Prec_alice {top2.avg:.1f}%'.format(
                         epoch,
                         self.arg.epochs,
                         bob_loss,
@@ -149,34 +139,61 @@ class syft_model:
             else:
                 update(data, target, self.bobs_model, self.bobs_optimizer)
 
-        # encrypted aggregation
-        new_params = list()
-        for param_i in range(len(self.params[0])):
-            spd_params = list()
-            # iterate all workers
-            for index in range(2):
-                clip_grad_norm_(self.bobs_model.parameters(), max_norm=20)
-                clip_grad_norm_(self.alice_model.parameters(), max_norm=20)
-                # aggregation same parameters from every workers. Then encrypt
-                # it into individual worker depends on trusted worker for all.
-                spd_params.append(
-                    self.params[index][param_i].copy().fix_precision().share(
-                        self.bob, self.alice, crypto_provider=self.secure_worker))
-            # decrypt parameter.
-            new = (spd_params[0] + spd_params[1]).get().float_precision() / 2
-            new_params.append(new)
-        # clean up
-        with torch.no_grad():
-            # iterate all parameters
-            for model in self.params:
-                for param in model:
-                    param *= 0
+            # encrypted aggregation
+            new_params = list()
+            # gradients clip
+            clip_grad_norm_(self.bobs_model.parameters(), max_norm=20)
+            clip_grad_norm_(self.alice_model.parameters(), max_norm=20)
 
-            # set new parameters in all sub workers, bob and alice.
-            for remote_index in range(2):
-                for param_index in range(len(self.params[remote_index])):
-                    self.params[remote_index][param_index].set_(
-                        new_params[param_index])
+            for param_i in range(len(self.params[0])):
+                spd_params = list()
+                '''
+                   # 获取相关加密参数 待加密数据维度  安全参数，一般取1 随机数范围
+                '''
+                T = getRandomMatrix(len(self.params[0][param_i].flatten()), 1, 100)
+                # 私钥
+                size = self.params[0][param_i].shape
+                # max_length = 0
+                S = getSecretKey(T)
+                # iterate all workers
+                for index in range(2):
+
+                    # aggregation same parameters from every workers. Then encrypt
+                    # it into individual worker depends on trusted worker for all.
+                    a = np.array(self.params[index][param_i].copy().fix_precision().tolist()).flatten()
+                    # for value in a:
+                    #     if "." in str(value):
+                    #         _, diam = str(value).split(".")
+                    #         if max_length < len(diam):
+                    #             max_length = len(diam)
+                    # 加密
+                    c = encrypt(T, a)
+                    spd_params.append(c)
+                # decrypt parameter.
+                new = (spd_params[0] + spd_params[1]) / 2
+                new_params.append(new)
+                # test for decrypt
+                # 解密
+                dc = decrypt(S, new)
+                temp=[]
+                for i in dc:
+                    temp.append(i)
+                tmp = torch.from_numpy(np.array(temp)).reshape(size)
+                t = tmp.send(self.bob)
+                self.params[index][param_i].set_(tmp)
+                # tmp = torch.from_numpy(dc).float_precision()
+            # clean up
+            with torch.no_grad():
+                # iterate all parameters
+                for model in self.params:
+                    for param in model:
+                        param *= 0
+
+                # set new parameters in all sub workers, bob and alice.
+                for remote_index in range(2):
+                    for param_index in range(len(self.params[remote_index])):
+                        self.params[remote_index][param_index].set_(
+                            new_params[param_index])
 
     def test(self, model):
         model.eval()

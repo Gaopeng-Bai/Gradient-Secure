@@ -18,6 +18,7 @@ Reimplement state-of-the-art CNN models in Cifar100 dataset with Pysyft, now inc
     5.[DenseNet](https://arxiv.org/abs/1608.06993v4)
 
     6.[Alexnet](https://arxiv.org/ftp/arxiv/papers/1803/1803.01164.pdf)
+
 * For Mnist dataset:
 
     7.[Lenet](https://arxiv.org/pdf/1909.12778.pdf)
