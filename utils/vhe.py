@@ -12,7 +12,7 @@ np.set_printoptions(suppress=True, threshold=np.inf)
 # 大整数
 w = 10 ** 30
 # 比特化参数
-l = 150
+l = 200
 # 随机矩阵中随机值范围
 aBound, tBound, eBound = 1000, 1000, 1000
 import random

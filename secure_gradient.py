@@ -153,35 +153,30 @@ class syft_model:
                 T = getRandomMatrix(len(self.params[0][param_i].flatten()), 1, 100)
                 # 私钥
                 size = self.params[0][param_i].shape
-                # max_length = 0
+                max_length = 0
                 S = getSecretKey(T)
                 # iterate all workers
                 for index in range(2):
 
                     # aggregation same parameters from every workers. Then encrypt
                     # it into individual worker depends on trusted worker for all.
-                    a = np.array(self.params[index][param_i].copy().fix_precision().tolist()).flatten()
-                    # for value in a:
-                    #     if "." in str(value):
-                    #         _, diam = str(value).split(".")
-                    #         if max_length < len(diam):
-                    #             max_length = len(diam)
+                    parameters = np.array(self.params[index][param_i].copy().tolist()).flatten()
+                    for value in parameters:
+                        if "." in str(value):
+                            _, diam = str(value).split(".")
+                            if max_length < len(diam):
+                                max_length = len(diam)
                     # 加密
-                    c = encrypt(T, a)
+                    a = parameters*10**(max_length-1)
+                    a_int = a.astype(int64)
+                    c = encrypt(T, a_int)
                     spd_params.append(c)
                 # decrypt parameter.
-                new = (spd_params[0] + spd_params[1]) / 2
+                new = (spd_params[0] + spd_params[1])
                 new_params.append(new)
                 # test for decrypt
                 # 解密
-                dc = decrypt(S, new)
-                temp=[]
-                for i in dc:
-                    temp.append(i)
-                tmp = torch.from_numpy(np.array(temp)).reshape(size)
-                t = tmp.send(self.bob)
-                self.params[index][param_i].set_(tmp)
-                # tmp = torch.from_numpy(dc).float_precision()
+
             # clean up
             with torch.no_grad():
                 # iterate all parameters
@@ -192,8 +187,8 @@ class syft_model:
                 # set new parameters in all sub workers, bob and alice.
                 for remote_index in range(2):
                     for param_index in range(len(self.params[remote_index])):
-                        self.params[remote_index][param_index].set_(
-                            new_params[param_index])
+                        dc = decrypt(S, new_params[param_index]).astype(float) / 2 / 10 ** (max_length - 1)
+                        self.params[remote_index][param_index].data = torch.from_numpy(np.array(dc).reshape(size))
 
     def test(self, model):
         model.eval()
