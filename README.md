@@ -1,4 +1,4 @@
-# Experiments on CIFAR datasets with Syft model
+# Experiments on CIFAR&MINIST datasets with gradient encryption.
 
 ## Introduction
 
