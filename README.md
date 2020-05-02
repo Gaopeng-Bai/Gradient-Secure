@@ -1,4 +1,4 @@
-# Experiments on CIFAR&MINIST datasets with gradient encryption.
+# Experiments on CIFAR & MINIST datasets with gradient encryption.
 
 ## Introduction
 
