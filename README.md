@@ -1,4 +1,4 @@
-# Experiments on CIFAR&MNIST datasets with gradient encryption.
+# Experiments on CIFAR & MNIST datasets with gradient encryption.
 
 ## Introduction
 
