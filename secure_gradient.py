@@ -73,14 +73,6 @@ def update(data, target, model, optimizer):
 class syft_model:
     def __init__(self, arg):
         self.arg = arg
-        hook = sy.TorchHook(torch)
-        #  connect to two remote workers that be call alice and bob and request
-        # another worker called the crypto_provider who gives all the crypto
-        # primitives we may need
-        self.bob = sy.VirtualWorker(hook, id="bob")
-        self.alice = sy.VirtualWorker(hook, id="alice")
-        self.secure_worker = sy.VirtualWorker(hook, id="secure_worker")
-
         # load data
         self.train_loader, self.test_loader = data_loader(self.arg)
         # pre model prepare
@@ -139,56 +131,63 @@ class syft_model:
             else:
                 update(data, target, self.bobs_model, self.bobs_optimizer)
 
-            # encrypted aggregation
-            new_params = list()
-            # gradients clip
-            clip_grad_norm_(self.bobs_model.parameters(), max_norm=20)
-            clip_grad_norm_(self.alice_model.parameters(), max_norm=20)
+        # encrypted aggregation
+        new_params = list()
+        # save the parameters shape to recover decrypted data.
+        params_size = list()
+        # save the exponential of value to convert float to int64
+        max_length = list()
+        # save encrypted private key to decrypt, each layer has specified key.
+        Private_key = list()
+        # gradients clip
+        clip_grad_norm_(self.bobs_model.parameters(), max_norm=20)
+        clip_grad_norm_(self.alice_model.parameters(), max_norm=20)
 
-            for param_i in range(len(self.params[0])):
-                spd_params = list()
-                '''
-                   # 获取相关加密参数 待加密数据维度  安全参数，一般取1 随机数范围
-                '''
-                T = getRandomMatrix(len(self.params[0][param_i].flatten()), 1, 100)
-                # 私钥
-                size = self.params[0][param_i].shape
-                max_length = 0
-                S = getSecretKey(T)
-                # iterate all workers
-                for index in range(2):
+        for param_i in range(len(self.params[0])):
+            spd_params = list()
+            '''
+                 from utils.vhe  Homomorphic encryption.
+                 
+               # Obtain relevant encryption parameters Data dimension to be encrypted Security parameters, 
+                 generally take 1 random number range
+            '''
+            T = getRandomMatrix(len(self.params[0][param_i].flatten()), 1, 100)
+            # private key generated.
+            Private_key.append(getSecretKey(T))
+            params_size.append(self.params[0][param_i].shape)
+            # Calculate the number of decimal places.
+            length = 0
+            for value in np.array(self.params[0][param_i].tolist()).flatten():
+                if "." in str(value):
+                    _, diam = str(value).split(".")
+                    if length < len(diam):
+                        length = len(diam)
+            max_length.append(length)
 
-                    # aggregation same parameters from every workers. Then encrypt
-                    # it into individual worker depends on trusted worker for all.
-                    parameters = np.array(self.params[index][param_i].copy().tolist()).flatten()
-                    for value in parameters:
-                        if "." in str(value):
-                            _, diam = str(value).split(".")
-                            if max_length < len(diam):
-                                max_length = len(diam)
-                    # 加密
-                    a = parameters*10**(max_length-1)
-                    a_int = a.astype(int64)
-                    c = encrypt(T, a_int)
-                    spd_params.append(c)
-                # decrypt parameter.
-                new = (spd_params[0] + spd_params[1])
-                new_params.append(new)
-                # test for decrypt
-                # 解密
+            # iterate all sub models.
+            for index in range(2):
+                # aggregation same parameters from every workers. Then encrypt
+                # it into individual worker depends on trusted worker for all.
+                parameters = np.array(self.params[index][param_i].tolist()).flatten()
+                # encrypt data that must be integer, so Zoom in from float to integer.
+                # hint: int and int64 not same type.
+                a = parameters * 10 ** (max_length[param_i] - 1)
+                a_int = a.astype(int64)
+                spd_params.append(encrypt(T, a_int))
+            # Homomorphic encrypted sum operation.
+            new_params.append((spd_params[0] + spd_params[1]))
 
-            # clean up
-            with torch.no_grad():
-                # iterate all parameters
-                for model in self.params:
-                    for param in model:
-                        param *= 0
-
-                # set new parameters in all sub workers, bob and alice.
-                for remote_index in range(2):
-                    for param_index in range(len(self.params[remote_index])):
-                        dc = decrypt(S, new_params[param_index]).astype(float) / 2 / 10 ** (max_length - 1)
-                        self.params[remote_index][param_index].data = torch.from_numpy(np.array(dc).reshape(size))
+        # clean up
+        with torch.no_grad():
+            # iterate all parameters
+            for model in self.params:
+                for param in model:
+                    param *= 0
+            # set new parameters in all sub workers, bob and alice.
+            for remote_index in range(2):
+                for param_index in range(len(self.params[remote_index])):
+                    dc = decrypt(Private_key[param_index], new_params[param_index]).astype(float) / 2 / 10 ** (max_length[param_index] - 1)
+                    self.params[remote_index][param_index].data = torch.from_numpy(np.array(dc).reshape(params_size[param_index]))
 
     def test(self, model):
         model.eval()
