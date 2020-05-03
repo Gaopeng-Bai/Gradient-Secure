@@ -1,6 +1,19 @@
 ---
 title: Experiments on CIFAR & MNIST datasets with gradient encryption.
 ---
+<!-- TOC -->
+
+- [0.1. Introduction](#01-introduction)
+- [0.2. Requirements](#02-requirements)
+    - [0.2.1. software](#021-software)
+    - [0.2.2. Hardware](#022-hardware)
+- [0.3. Usage](#03-usage)
+    - [0.3.1. Clone this repository](#031-clone-this-repository)
+    - [0.3.2. Edit syft_main.py relevant parameters of model](#032-edit-syft_mainpy-relevant-parameters-of-model)
+    - [0.3.3. Train](#033-train)
+    - [0.3.4. Extension (For fun)](#034-extension-for-fun)
+
+<!-- /TOC -->
 
 ## 0.1. Introduction
 
