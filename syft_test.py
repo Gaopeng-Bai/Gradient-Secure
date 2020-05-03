@@ -24,22 +24,21 @@ from utils.test import data_test
 from utils.model import model_select
 
 parser = argparse.ArgumentParser(description='PyTorch syft test depends on syft tutorial-10 Training')
-parser.add_argument('--dataset', default="mnist", type=str,
-                    metavar='N', help='mnist or cifar100')
-parser.add_argument('--model', default="lenet5", type=str,
-                    metavar='N', help='choose a model to use mnist(lenet5, ) or for cifar100 datasets(resnet20, resnet32, resnet44, resnet110'
-                                      'preact_resnet110, resnet164, resnet1001, preact_resnet164, preact_resnet1001'
-                                      'wide_resnet, resneXt, densenet)')
-parser.add_argument('--epochs', default=200, type=int,
-                    metavar='N', help='number of total epochs to run')
+parser.add_argument('--dataset', default="mnist", type=str, metavar='N', help='mnist or cifar100')
+parser.add_argument('--model', default="lenet5", type=str, metavar='N',
+                    help='choose a model to use mnist(lenet5, simply_cnn, simply_cnn2, alexnet) or for '
+                         'cifar100 datasets(resnet20, resnet32, resnet44, resnet110 preact_resnet110, '
+                         'resnet164, resnet1001, preact_resnet164, preact_resnet1001, wide_resnet, resneXt, densenet)')
+parser.add_argument('--epochs', default=15, type=int, metavar='N', help='number of total epochs to run')
+parser.add_argument('--worker_iter', default=5, type=int, metavar='N',
+                    help='worker iterations(times of training in specify worker)')
 parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N',
                     help='mini-batch size (default: 128),only used for train')
-parser.add_argument('--lr', '--learning-rate', default=0.1,
-                    type=float, metavar='LR', help='initial learning rate')
-parser.add_argument('--momentum', default=0.9, type=float,
-                    metavar='M', help='momentum')
-parser.add_argument('--weight-decay', '--wd', default=1e-4,
-                    type=float, metavar='W', help='weight decay (default: 1e-4)')
+parser.add_argument('--lr', '--learning-rate', default=0.1, type=float, metavar='LR', help='initial learning rate')
+parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
+parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float, metavar='W',
+                    help='weight decay (default: 1e-4, lenet with mnist suggest:1e-2)')
+parser.add_argument('--print-freq', '-p', default=100, type=int, metavar='N', help='print frequency (default: 10)')
 args = parser.parse_args()
 
 
