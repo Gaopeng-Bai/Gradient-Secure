@@ -1,5 +1,5 @@
 ---
-title: Experiments on CIFAR & MNIST datasets with gradient encryption.
+Title: Experiments on CIFAR & MNIST datasets with gradient encryption.
 ---
 <!-- TOC -->
 
