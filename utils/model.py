@@ -12,6 +12,7 @@
 from models import *
 from models.lenet import lenet
 from models.simply_cnn import simply_cnn
+from models.simply_cnn2 import simply_cnn2
 
 from models.alexnet import AlextNet
 
@@ -55,6 +56,8 @@ def model_select(arg):
         model = AlextNet(in_channel=1, n_class=10)
     elif arg == "simply_cnn":
         model = simply_cnn()
+    elif arg == "simply_cnn2":
+        model = simply_cnn2()
 
     return model
 
