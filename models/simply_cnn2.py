@@ -9,7 +9,7 @@
 # @Software: PyCharm
 # @Description: 
 # Reference:**********************************************
-import torch
+import torch.nn as nn
 
 
 class simply_cnn2(nn.Module):
