@@ -155,8 +155,7 @@ class syft_model:
                 # hint: int and int64 not same type.
                 a = parameters * 10 ** (max_length[param_i] - 1)
                 a_int = a.astype(int64)
-                new= encrypt(T, a_int)
-                spd_params.append(new)
+                spd_params.append(encrypt(T, a_int))
             # Homomorphic encrypted sum operation.
             new_params.append((spd_params[0] + spd_params[1]))
 
