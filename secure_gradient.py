@@ -113,14 +113,6 @@ class syft_model:
             else:
                 update(data, target, self.bobs_model, self.bobs_optimizer)
 
-            # encrypted aggregation
-            new_params = list()
-            # save the parameters shape to recover decrypted data.
-            params_size = list()
-            # save the exponential of value to convert float to int64
-            max_length = list()
-            # save encrypted private key to decrypt, each layer has specified key.
-            Private_key = list()
             db = Database()
             # gradients clip
             clip_grad_norm_(self.bobs_model.parameters(), max_norm=20)
@@ -163,7 +155,7 @@ class syft_model:
                 # Homomorphic encrypted sum operation.
                 # new_params.append((spd_params[0] + spd_params[1]))
                 # new_params.append((spd_params[0] + spd_params[1]))
-                db.insert_db(str(spd_params[0] + spd_params[1]), str(self.params[0][0].shape), str(length), str(private_key))
+                db.insert_db(param_i, str(spd_params[0] + spd_params[1]), str(self.params[0][0].shape), str(length), str(private_key))
 
             # clean up
             with torch.no_grad():
