@@ -23,6 +23,8 @@ This structure could be built by using [PySyft framework](https://github.com/Ope
 
     utils/vhe.py
 
+* **Hint: this algorithm consumes extremely huge memory space lead to memory overflow even in simply CNN model. vhe.py Must be improved to manage to optimize memory space, for example, point instead of variables.**
+
 Reimplement state-of-the-art CNN models in Cifar100 dataset with Pysyft, now including:
 
 - For cifar100 dataset:
